@@ -1,0 +1,157 @@
+version: '2.0'
+services:
+  babycamproxy:
+    image: kverhaar/kv-webcam-proxy
+    environment:
+      - WEBCAMPROXY_DESTHOST=${BABYCAM_HOST}
+    networks:
+      - default
+  homeassistant:
+    image: kverhaar/home-assistant-arm64v8:latest
+    depends_on:
+      - hass-db
+      - mosquitto
+    volumes:
+      - "/home/kees/homeassistant:/config"
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    ports:
+      - 8123:8123
+    networks:
+      - traefik_proxy
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=homeassistant"
+      - "traefik.frontend.rule=Host:home.${DOMAINNAME}"
+      - "traefik.port=8123"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+  appdaemon:
+    image: kverhaar/appdaemon-arm64v8
+    depends_on:
+      - homeassistant
+    environment:
+      - HA_URL=http://homeassistant:8123
+      - HA_KEY=${HA_KEY}
+      - DASH_URL="http://home.lan:5050"
+    volumes:
+      - "/home/kees/appdaemon:/conf"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=appdaemon"
+      - "traefik.frontend.rule=Host:appdaemon.${DOMAINNAME}"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.port=5050"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+    networks:
+      - default
+      - traefik_proxy
+  hass-db:
+    image: kverhaar/postgres-arm64v8:10
+    volumes:
+      - /home/kees/homeassistant/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRESS_USER}
+      - POSTGRES_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRES_DB=homeassistant
+    networks:
+      - default
+  influxdb:
+    image: kverhaar/influxdb-arm64v8:latest
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/home/kees/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro"
+      - "/home/kees/influxdb/data:/var/lib/influxdb"
+    networks:
+      - default
+      - influxdb
+  mosquitto:
+    image: kverhaar/mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/home/kees/mosquitto/config:/mosquitto/config"
+      - "/home/kees/mosquitto/log:/mosquitto/log"
+      - "/home/kees/mosquitto/data:/mosquitto/data"
+    networks:
+      - default
+  node-red:
+    image: kverhaar/node-red
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/home/kees/node-red/data:/data"
+    environment:
+      - FLOWS=flows.json
+    networks:
+      - default
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=node-red"
+      - "traefik.frontend.rule=Host:node-red.${DOMAINNAME}"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.port=1880"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+  sickrage:
+    image: kverhaar/sickrage
+    volumes:
+      - "/home/kees/sickrage/data:/data"
+      - "/home/kees/sickrage/config:/config"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/mnt/video/Series:/tvshows"
+      - "/mnt/downloads/SABnzbd/Downloads/sickrage:/downloads"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=sickrage"
+      - "traefik.frontend.rule=Host:sickrage.${DOMAINNAME}"
+      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
+      - "traefik.port=8081"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+    networks:
+      - traefik_proxy
+networks:
+  traefik_proxy:
+    external:
+      name: traefik_proxy
+  influxdb:
+    external:
+      name: influxdb
+  default:
+    driver: bridge
