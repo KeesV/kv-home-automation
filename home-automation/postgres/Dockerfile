@@ -5,5 +5,7 @@
 FROM arm64v8/postgres:10
 LABEL maintainer="Kees Verhaar <kverhaar@gmail.com>"
 
+COPY create-multiple-postgresql-databases.sh /docker-entrypoint-initdb.d/
+
 HEALTHCHECK --interval=30s --timeout=10s --retries=6 \
-  CMD pg_isready
+  CMD pg_isready -U postgres

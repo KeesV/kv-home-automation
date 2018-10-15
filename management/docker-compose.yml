@@ -52,10 +52,33 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+    environment:
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=grafana-db:5432
+      - GF_DATABASE_NAME=grafana_data
+      - GF_DATABASE_USER=${GRAFANA_POSTGRES_USER}
+      - GF_DATABASE_PASSWORD=${GRAFANA_POSTGRES_PASSWORD}
+      - GF_SESSION_PROVIDER=postgres
+      - GF_SESSION_PROVIDER_CONFIG="user=${GRAFANA_POSTGRES_USER} password=${GRAFANA_POSTGRES_PASSWORD} host=grafana-db dbname=grafana_sessions sslmode=disable"
+    depends_on:
+      - grafana-db
     networks:
       - default
       - traefik_proxy
       - influxdb
+      - monitor-net
+      - grafana
+  grafana-db:
+    image: kverhaar/postgres-arm64v8:10
+    volumes:
+      - /home/kees/grafana/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${GRAFANA_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${GRAFANA_POSTGRES_PASSWORD}
+      - POSTGRES_DB=grafana
+      - POSTGRES_MULTIPLE_DATABASES="grafana_data","grafana_sessions"
+    networks:
+      - grafana
   portainer:
     image: portainer/portainer
     volumes:
@@ -152,4 +175,5 @@ networks:
   monitor-net:
     external:
       name: monitor-net
+  grafana:
   default:

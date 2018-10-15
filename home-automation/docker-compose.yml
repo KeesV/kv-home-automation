@@ -69,8 +69,8 @@ services:
     volumes:
       - /home/kees/homeassistant/db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRESS_USER}
-      - POSTGRES_PASSWORD=${POSTGRESS_PASSWORD}
+      - POSTGRES_USER=${HA_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${HA_POSTGRES_PASSWORD}
       - POSTGRES_DB=homeassistant
     networks:
       - default
