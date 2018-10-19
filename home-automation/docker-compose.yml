@@ -1,4 +1,4 @@
-version: '2.0'
+version: '3.5'
 services:
   babycamproxy:
     image: kverhaar/kv-webcam-proxy
@@ -75,11 +75,16 @@ services:
     networks:
       - default
   influxdb:
-    image: kverhaar/influxdb-arm64v8:latest
+    image: arm64v8/influxdb:latest
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro"
       - "/home/kees/influxdb/data:/var/lib/influxdb"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sI http://127.0.0.1:8086/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
     networks:
       - default
       - influxdb

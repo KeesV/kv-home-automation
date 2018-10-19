@@ -1,9 +1,10 @@
-version: '2.0'
+version: '3.5'
 services:
   traefik:
     hostname: traefik
     image: kverhaar/traefik-arm64v8:latest
     domainname: deverhaartjes.nl
+    restart: on-failure
     networks:
       - default
       - traefik_proxy
@@ -33,7 +34,8 @@ services:
       - /home/kees/traefik:/etc/traefik
       - /home/kees/shared:/shared
   grafana:
-    image: kverhaar/grafana-arm64v8:5.1.4
+    image: fg2it/grafana-armhf:v5.1.4
+    restart: on-failure
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/grafana:/var/lib/grafana"
@@ -60,6 +62,11 @@ services:
       - GF_DATABASE_PASSWORD=${GRAFANA_POSTGRES_PASSWORD}
       - GF_SESSION_PROVIDER=postgres
       - GF_SESSION_PROVIDER_CONFIG="user=${GRAFANA_POSTGRES_USER} password=${GRAFANA_POSTGRES_PASSWORD} host=grafana-db dbname=grafana_sessions sslmode=disable"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:3000/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
     depends_on:
       - grafana-db
     networks:
@@ -70,6 +77,7 @@ services:
       - grafana
   grafana-db:
     image: kverhaar/postgres-arm64v8:10
+    restart: on-failure
     volumes:
       - /home/kees/grafana/db:/var/lib/postgresql/data
     environment:
@@ -81,6 +89,7 @@ services:
       - grafana
   portainer:
     image: portainer/portainer
+    restart: on-failure
     volumes:
       - "/home/kees/portainer:/data"
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -103,6 +112,7 @@ services:
       - traefik_proxy
   prometheus:
     image: rycus86/prometheus
+    restart: on-failure
     volumes:
       - /home/kees/prometheus/config:/etc/prometheus/
       - /home/kees/prometheus/data:/prometheus
@@ -121,6 +131,7 @@ services:
       org.label-schema.group: "monitoring"
   alertmanager:
     image: xjjo/arm64-alertmanager:v0.15.2
+    restart: on-failure
     volumes: 
       - /home/kees/alertmanager/:/etc/alertmanager/
     command:
@@ -134,6 +145,7 @@ services:
       org.label-schema.group: "monitoring"
   nodeexporter:
     image: rycus86/prometheus-node-exporter
+    restart: on-failure
     user: root
     privileged: true
     volumes:
@@ -152,6 +164,7 @@ services:
       org.label-schema.group: "monitoring"
   cadvisor:
     image: unibaktr/cadvisor:linux-arm64v8-latest
+    restart: on-failure
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
