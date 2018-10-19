@@ -1,16 +1,20 @@
-version: '3.5'
+version: '2.3'
 services:
   babycamproxy:
     image: kverhaar/kv-webcam-proxy
+    cpus: 0.2
     environment:
       - WEBCAMPROXY_DESTHOST=${BABYCAM_HOST}
     networks:
       - default
   homeassistant:
     image: kverhaar/home-assistant-arm64v8:latest
+    cpus: 0.6
     depends_on:
-      - hass-db
-      - mosquitto
+      hass-db:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
     volumes:
       - "/home/kees/homeassistant:/config"
     devices:
@@ -37,6 +41,7 @@ services:
       - "traefik.frontend.headers.frameDeny=true"
   appdaemon:
     image: kverhaar/appdaemon-arm64v8
+    cpus: 0.2
     depends_on:
       - homeassistant
     environment:
@@ -66,6 +71,7 @@ services:
       - traefik_proxy
   hass-db:
     image: kverhaar/postgres-arm64v8:10
+    cpus: 0.2
     volumes:
       - /home/kees/homeassistant/db:/var/lib/postgresql/data
     environment:
@@ -76,6 +82,7 @@ services:
       - default
   influxdb:
     image: arm64v8/influxdb:latest
+    cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro"
@@ -90,6 +97,7 @@ services:
       - influxdb
   mosquitto:
     image: kverhaar/mosquitto
+    cpus: 0.3
     ports:
       - "1883:1883"
     volumes:
@@ -101,6 +109,7 @@ services:
       - default
   node-red:
     image: kverhaar/node-red
+    cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/node-red/data:/data"
@@ -109,6 +118,9 @@ services:
     networks:
       - default
       - traefik_proxy
+    depends_on:
+      mosquitto:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.backend=node-red"
@@ -127,6 +139,7 @@ services:
       - "traefik.frontend.headers.frameDeny=true"
   sickrage:
     image: kverhaar/sickrage
+    cpus: 0.4
     volumes:
       - "/home/kees/sickrage/data:/data"
       - "/home/kees/sickrage/config:/config"

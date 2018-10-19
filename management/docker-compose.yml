@@ -1,10 +1,10 @@
-version: '3.5'
+version: '2.3'
 services:
   traefik:
     hostname: traefik
     image: kverhaar/traefik-arm64v8:latest
     domainname: deverhaartjes.nl
-    restart: on-failure
+    cpus: 0.2
     networks:
       - default
       - traefik_proxy
@@ -14,6 +14,11 @@ services:
     environment:
       - CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL}
       - CLOUDFLARE_API_KEY=${CLOUDFLARE_API_KEY}
+    healthcheck:
+      test: ["CMD", "/traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
     labels:
       - "traefik.enable=true"
       - "traefik.backend=traefik"
@@ -35,7 +40,7 @@ services:
       - /home/kees/shared:/shared
   grafana:
     image: fg2it/grafana-armhf:v5.1.4
-    restart: on-failure
+    cpus: 0.3
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/grafana:/var/lib/grafana"
@@ -68,7 +73,8 @@ services:
       timeout: 10s
       retries: 6
     depends_on:
-      - grafana-db
+      grafana-db:
+        condition: service_healthy
     networks:
       - default
       - traefik_proxy
@@ -77,7 +83,7 @@ services:
       - grafana
   grafana-db:
     image: kverhaar/postgres-arm64v8:10
-    restart: on-failure
+    cpus: 0.2
     volumes:
       - /home/kees/grafana/db:/var/lib/postgresql/data
     environment:
@@ -89,7 +95,6 @@ services:
       - grafana
   portainer:
     image: portainer/portainer
-    restart: on-failure
     volumes:
       - "/home/kees/portainer:/data"
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -111,8 +116,8 @@ services:
     networks:
       - traefik_proxy
   prometheus:
-    image: rycus86/prometheus
-    restart: on-failure
+    image: kverhaar/prometheus-arm64v8
+    cpus: 0.4
     volumes:
       - /home/kees/prometheus/config:/etc/prometheus/
       - /home/kees/prometheus/data:/prometheus
@@ -131,7 +136,7 @@ services:
       org.label-schema.group: "monitoring"
   alertmanager:
     image: xjjo/arm64-alertmanager:v0.15.2
-    restart: on-failure
+    cpus: 0.2
     volumes: 
       - /home/kees/alertmanager/:/etc/alertmanager/
     command:
@@ -144,8 +149,8 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   nodeexporter:
-    image: rycus86/prometheus-node-exporter
-    restart: on-failure
+    image: kverhaar/nodeexporter-arm64v8
+    cpus: 0.2
     user: root
     privileged: true
     volumes:
@@ -163,8 +168,8 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   cadvisor:
-    image: unibaktr/cadvisor:linux-arm64v8-latest
-    restart: on-failure
+    image: kverhaar/cadvisor-arm64v8
+    cpus: 1
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
