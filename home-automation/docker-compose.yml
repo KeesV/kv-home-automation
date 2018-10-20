@@ -9,11 +9,13 @@ services:
       - default
   homeassistant:
     image: kverhaar/home-assistant-arm64v8:latest
-    cpus: 0.6
+    cpus: 0.8
     depends_on:
       hass-db:
         condition: service_healthy
       mosquitto:
+        condition: service_healthy
+      influxdb:
         condition: service_healthy
     volumes:
       - "/home/kees/homeassistant:/config"
