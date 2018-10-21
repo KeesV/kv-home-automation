@@ -9,7 +9,7 @@ services:
       - default
   homeassistant:
     image: kverhaar/home-assistant-arm64v8:latest
-    cpus: 0.8
+    cpus: 1.5
     depends_on:
       hass-db:
         condition: service_healthy
