@@ -24,5 +24,5 @@ GRAFANA_POSTGRES_PASSWORD=<password for the Grafana postgres instance>
 ```
 
 ## Domain / DNS
-I have registered a public domain and configured that to use (https://www.cloudflare.com/)[Cloudflare] as DNS. This allows me to use Traefik to automatically generate and renew (https://letsencrypt.org/)[Let's Encrypt] SSL certificates.
+I have registered a public domain and configured that to use [Cloudflare](https://www.cloudflare.com/) as DNS. This allows me to use Traefik to automatically generate and renew [Let's Encrypt](https://letsencrypt.org/) SSL certificates.
 This requires Traefik to know the Cloudflare account and API key, hence that's why they're configured above.
