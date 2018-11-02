@@ -14,7 +14,7 @@ SHELL ["/bin/bash", "-c"]
 #ENV INSTALL_PHANTOMJS no
 #ENV INSTALL_SSOCR no
 
-RUN apt-get update && apt-get install libudev-dev postgresql-server-dev-all libavahi-compat-libdnssd-dev -y
+RUN apt-get update && apt-get install libudev-dev postgresql-server-dev-all libavahi-compat-libdnssd-dev ffmpeg -y
 RUN apt-get clean
 
 RUN python3 -m venv homeassistant

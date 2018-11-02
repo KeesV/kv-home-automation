@@ -1,4 +1,4 @@
-FROM aarch64/python:2.7
+FROM arm64v8/python:2.7
 
 RUN pip install --upgrade pip && pip install pytz
 
