@@ -75,7 +75,7 @@ services:
     image: kverhaar/postgres-arm64v8:10
     cpus: 0.2
     volumes:
-      - /home/kees/homeassistant/db:/var/lib/postgresql/data
+      - /home/kees/data/homeassistant:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${HA_POSTGRES_USER}
       - POSTGRES_PASSWORD=${HA_POSTGRES_PASSWORD}
@@ -87,8 +87,8 @@ services:
     cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
-      - "/home/kees/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro"
-      - "/home/kees/influxdb/data:/var/lib/influxdb"
+      - "/home/kees/config/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf:ro"
+      - "/home/kees/data/influxdb:/var/lib/influxdb"
     healthcheck:
       test: ["CMD-SHELL", "curl -sI http://127.0.0.1:8086/ping || exit 1"]
       interval: 30s
@@ -104,9 +104,9 @@ services:
       - "1883:1883"
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
-      - "/home/kees/mosquitto/config:/mosquitto/config"
-      - "/home/kees/mosquitto/log:/mosquitto/log"
-      - "/home/kees/mosquitto/data:/mosquitto/data"
+      - "/home/kees/config/mosquitto:/mosquitto/config"
+      - "/home/kees/data/mosquitto/log:/mosquitto/log"
+      - "/home/kees/data/mosquitto/data:/mosquitto/data"
     networks:
       - default
   node-red:
@@ -114,7 +114,7 @@ services:
     cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
-      - "/home/kees/node-red/data:/data"
+      - "/home/kees/config/node-red:/data"
     environment:
       - FLOWS=flows.json
     networks:
@@ -143,8 +143,8 @@ services:
     image: kverhaar/sickrage
     cpus: 0.4
     volumes:
-      - "/home/kees/sickrage/data:/data"
-      - "/home/kees/sickrage/config:/config"
+      - "/home/kees/data/sickrage:/data"
+      - "/home/kees/config/sickrage:/config"
       - "/etc/localtime:/etc/localtime:ro"
       - "/mnt/video/Series:/tvshows"
       - "/mnt/downloads/SABnzbd/Downloads/sickrage:/downloads"
