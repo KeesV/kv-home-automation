@@ -1,20 +1,20 @@
 version: '2.3'
 services:
   babycamproxy:
-    image: kverhaar/kv-webcam-proxy
+    image: kverhaar/kv-webcam-proxy:1.1
     cpus: 0.2
     environment:
       - WEBCAMPROXY_DESTHOST=${BABYCAM_HOST}
     networks:
       - default
   homeassistant:
-    image: kverhaar/home-assistant-arm64v8:latest
+    image: homeassistant/home-assistant:0.81.4
     cpus: 1.5
     depends_on:
       hass-db:
         condition: service_healthy
       mosquitto:
-        condition: service_healthy
+        condition: service_started
       influxdb:
         condition: service_healthy
     volumes:
@@ -42,14 +42,14 @@ services:
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
   appdaemon:
-    image: kverhaar/appdaemon-arm64v8
+    image: acockburn/appdaemon:3.0.2
     cpus: 0.2
     depends_on:
       - homeassistant
     environment:
       - HA_URL=http://homeassistant:8123
-      - HA_KEY=${HA_KEY}
       - DASH_URL="http://home.lan:5050"
+      - TOKEN=${HA_TOKEN}
     volumes:
       - "/home/kees/appdaemon:/conf"
     labels:
@@ -72,7 +72,7 @@ services:
       - default
       - traefik_proxy
   hass-db:
-    image: kverhaar/postgres-arm64v8:10
+    image: kverhaar/postgres:10
     cpus: 0.2
     volumes:
       - /home/kees/data/homeassistant:/var/lib/postgresql/data
@@ -83,7 +83,7 @@ services:
     networks:
       - default
   influxdb:
-    image: arm64v8/influxdb:latest
+    image: influxdb:1.6
     cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
@@ -98,7 +98,7 @@ services:
       - default
       - influxdb
   mosquitto:
-    image: kverhaar/mosquitto
+    image: eclipse-mosquitto:1.5
     cpus: 0.3
     ports:
       - "1883:1883"
@@ -107,10 +107,15 @@ services:
       - "/home/kees/config/mosquitto:/mosquitto/config"
       - "/home/kees/data/mosquitto/log:/mosquitto/log"
       - "/home/kees/data/mosquitto/data:/mosquitto/data"
+    # healthcheck:
+    #   test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 | grep -v Error || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 6
     networks:
       - default
   node-red:
-    image: kverhaar/node-red
+    image: nodered/node-red-docker:v8
     cpus: 0.2
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
@@ -121,8 +126,7 @@ services:
       - default
       - traefik_proxy
     depends_on:
-      mosquitto:
-        condition: service_healthy
+      - mosquitto
     labels:
       - "traefik.enable=true"
       - "traefik.backend=node-red"
@@ -139,33 +143,6 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
-  sickrage:
-    image: kverhaar/sickrage
-    cpus: 0.4
-    volumes:
-      - "/home/kees/data/sickrage:/data"
-      - "/home/kees/config/sickrage:/config"
-      - "/etc/localtime:/etc/localtime:ro"
-      - "/mnt/video/Series:/tvshows"
-      - "/mnt/downloads/SABnzbd/Downloads/sickrage:/downloads"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.backend=sickrage"
-      - "traefik.frontend.rule=Host:sickrage.${DOMAINNAME}"
-      - "traefik.frontend.auth.basic.usersFile=/shared/.htpasswd"
-      - "traefik.port=8081"
-      - "traefik.docker.network=traefik_proxy"
-      - "traefik.frontend.headers.SSLRedirect=true"
-      - "traefik.frontend.headers.STSSeconds=315360000"
-      - "traefik.frontend.headers.browserXSSFilter=true"
-      - "traefik.frontend.headers.contentTypeNosniff=true"
-      - "traefik.frontend.headers.forceSTSHeader=true"
-      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
-      - "traefik.frontend.headers.STSIncludeSubdomains=true"
-      - "traefik.frontend.headers.STSPreload=true"
-      - "traefik.frontend.headers.frameDeny=true"
-    networks:
-      - traefik_proxy
 networks:
   traefik_proxy:
     external:
