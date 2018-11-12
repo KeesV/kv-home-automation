@@ -44,7 +44,7 @@ services:
     cpus: 0.3
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
-      - "/home/kees/data/grafana:/var/lib/grafana"
+      - "/home/kees/data/grafana/data:/var/lib/grafana"
     labels:
       - "traefik.enable=true"
       - "traefik.backend=grafana"
