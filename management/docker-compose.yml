@@ -2,7 +2,7 @@ version: '2.3'
 services:
   traefik:
     hostname: traefik
-    image: kverhaar/traefik-arm64v8:latest
+    image: library/traefik:1.7
     domainname: deverhaartjes.nl
     cpus: 0.2
     networks:
@@ -40,11 +40,11 @@ services:
       - /home/kees/data/shared:/shared
       - /home/kees/data/traefik/acme:/etc/traefik/acme
   grafana:
-    image: fg2it/grafana-armhf:v5.1.4
+    image: grafana/grafana:5.3.2
     cpus: 0.3
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
-      - "/home/kees/data/grafana:/var/lib/grafana"
+      - "/home/kees/data/grafana/data:/var/lib/grafana"
     labels:
       - "traefik.enable=true"
       - "traefik.backend=grafana"
@@ -83,7 +83,7 @@ services:
       - monitor-net
       - grafana
   grafana-db:
-    image: kverhaar/postgres-arm64v8:10
+    image: kverhaar/postgres:10
     cpus: 0.2
     volumes:
       - /home/kees/data/grafana/db:/var/lib/postgresql/data
@@ -94,30 +94,30 @@ services:
       - POSTGRES_MULTIPLE_DATABASES="grafana_data","grafana_sessions"
     networks:
       - grafana
-  # portainer:
-  #   image: portainer/portainer
-  #   volumes:
-  #     - "/home/kees/data/portainer:/data"
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.backend=portainer"
-  #     - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"
-  #     - "traefik.port=9000"
-  #     - "traefik.docker.network=traefik_proxy"
-  #     - "traefik.frontend.headers.SSLRedirect=true"
-  #     - "traefik.frontend.headers.STSSeconds=315360000"
-  #     - "traefik.frontend.headers.browserXSSFilter=true"
-  #     - "traefik.frontend.headers.contentTypeNosniff=true"
-  #     - "traefik.frontend.headers.forceSTSHeader=true"
-  #     - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
-  #     - "traefik.frontend.headers.STSIncludeSubdomains=true"
-  #     - "traefik.frontend.headers.STSPreload=true"
-  #     - "traefik.frontend.headers.frameDeny=true"
-  #   networks:
-  #     - traefik_proxy
+  portainer:
+    image: portainer/portainer
+    volumes:
+      - "/home/kees/data/portainer:/data"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=portainer"
+      - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"
+      - "traefik.port=9000"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+    networks:
+      - traefik_proxy
   prometheus:
-    image: kverhaar/prometheus-arm64v8
+    image: prom/prometheus:v2.4.3
     cpus: 0.4
     volumes:
       - /home/kees/config/prometheus:/etc/prometheus/
@@ -136,7 +136,7 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   alertmanager:
-    image: xjjo/arm64-alertmanager:v0.15.2
+    image: prom/alertmanager:v0.15.2
     cpus: 0.2
     volumes: 
       - /home/kees/config/alertmanager/:/etc/alertmanager/
@@ -150,7 +150,7 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   nodeexporter:
-    image: kverhaar/nodeexporter-arm64v8
+    image: prom/node-exporter:v0.16.0
     cpus: 0.2
     user: root
     privileged: true
@@ -169,7 +169,7 @@ services:
     labels:
       org.label-schema.group: "monitoring"
   cadvisor:
-    image: kverhaar/cadvisor-arm64v8
+    image: google/cadvisor:v0.31.0
     cpus: 1
     volumes:
       - /:/rootfs:ro
