@@ -13,6 +13,8 @@ services:
     ports:
       - 8765:8765
       - 8081:8081
+    environment:
+      - HA_TOKEN=${HA_TOKEN}
     volumes:
       - "/etc/localtime:/etc/localtime:ro"
       - "/home/kees/config/motioneye:/etc/motioneye"
