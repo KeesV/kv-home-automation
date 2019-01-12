@@ -1,7 +1,7 @@
 version: '2.3'
 services:
   sickrage:
-    image: linuxserver/sickrage:153
+    image: linuxserver/sickrage:latest
     cpus: 0.4
     volumes:
       #- "/home/kees/data/sickrage:/data"
