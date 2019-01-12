@@ -20,7 +20,7 @@ services:
       - "/home/kees/config/motioneye:/etc/motioneye"
       - "/home/kees/data/motioneye:/var/lib/motioneye"
   homeassistant:
-    image: homeassistant/home-assistant:0.82.1
+    image: homeassistant/home-assistant:0.84.6
     cpus: 1.5
     depends_on:
       hass-db:
@@ -53,6 +53,13 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    cpus: 0.2
+    volumes:
+      - "/home/kees/config/zigbee2mqtt:/app/data"
+    devices:
+      - "/dev/ttyACM1:/dev/ttyACM1"
   appdaemon:
     image: acockburn/appdaemon:3.0.2
     cpus: 0.2
@@ -84,7 +91,7 @@ services:
       - default
       - traefik_proxy
   hass-db:
-    image: kverhaar/postgres:10
+    image: postgres:10
     cpus: 0.2
     volumes:
       - /home/kees/data/homeassistant:/var/lib/postgresql/data
@@ -92,6 +99,11 @@ services:
       - POSTGRES_USER=${HA_POSTGRES_USER}
       - POSTGRES_PASSWORD=${HA_POSTGRES_PASSWORD}
       - POSTGRES_DB=homeassistant
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
     networks:
       - default
   influxdb:
@@ -155,6 +167,41 @@ services:
       - "traefik.frontend.headers.STSIncludeSubdomains=true"
       - "traefik.frontend.headers.STSPreload=true"
       - "traefik.frontend.headers.frameDeny=true"
+  traccar:
+    image: traccar/traccar:4.2
+    cpus: 0.2
+    volumes:
+      - "/home/kees/config/traccar/logs:/opt/traccar/logs:rw"
+      - "/home/kees/config/traccar/traccar.xml:/opt/traccar/conf/traccar.xml:ro"
+    networks:
+      - default
+      - traefik_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=traccar"
+      - "traefik.frontend.rule=Host:traccar.${DOMAINNAME}"
+      - "traefik.port=8082"
+      - "traefik.docker.network=traefik_proxy"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=deverhaartjes.nl"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=false"
+  traccar-db:
+    image: kverhaar/postgres:10
+    cpus: 0.2
+    volumes:
+      - /home/kees/data/traccar:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${TRACCAR_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${TRACCAR_POSTGRES_PASSWORD}
+      - POSTGRES_DB=traccar
+    networks:
+      - default
 networks:
   traefik_proxy:
     external:
